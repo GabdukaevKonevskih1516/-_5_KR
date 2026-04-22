@@ -1,0 +1,100 @@
+def normalize_name(name):
+    """Приводит имя к нижнему регистру для сравнения без учета регистра"""
+    return name.strip().lower()
+
+
+def is_valid_name(name):
+    """Проверяет, что имя содержит только буквы, пробелы, дефисы и точки"""
+    if not name:
+        return False
+    allowed_chars = set('abcdefghijklmnopqrstuvwxyzабвгдеёжзийклмнопрстуфхцчшщъыьэюя -.')
+    return all(c.lower() in allowed_chars for c in name)
+
+
+# Ввод количества заказов с защитой
+while True:
+    try:
+        n = int(input("Введите кол-во заказов: "))
+        if n <= 0:
+            print("Ошибка: количество заказов должно быть положительным числом. Попробуйте снова.")
+            continue
+        break
+    except ValueError:
+        print("Ошибка: введите целое число. Попробуйте снова.")
+
+# Словарь для хранения заказов: покупатель -> {пицца: количество}
+# Ключи (покупатели и пиццы) храним в нижнем регистре
+orders = {}
+
+# Обрабатываем каждый заказ
+for i in range(n):
+    while True:
+        order_data = input(f"{i + 1} заказ: ").strip().split()
+
+        # Проверка количества полей ввода
+        if len(order_data) != 3:
+            print("Ошибка: введите данные в формате 'Покупатель Пицца Количество'. Попробуйте снова.")
+            continue
+
+        customer = order_data[0]
+        pizza = order_data[1]
+
+        # Проверка на пустые строки
+        if not customer or not pizza:
+            print("Ошибка: имя покупателя и название пиццы не могут быть пустыми. Попробуйте снова.")
+            continue
+
+        # Проверка на допустимые символы
+        if not is_valid_name(customer):
+            print("Ошибка: имя покупателя должно содержать только буквы, пробелы, дефисы или точки. Попробуйте снова.")
+            continue
+
+        if not is_valid_name(pizza):
+            print("Ошибка: название пиццы должно содержать только буквы, пробелы, дефисы или точки. Попробуйте снова.")
+            continue
+
+        # Проверка количества
+        try:
+            count = int(order_data[2])
+            if count <= 0:
+                print("Ошибка: количество пицц должно быть положительным числом. Попробуйте снова.")
+                continue
+        except ValueError:
+            print("Ошибка: количество должно быть целым числом. Попробуйте снова.")
+            continue
+
+        # Приводим имена к нормализованному виду для хранения
+        normalized_customer = normalize_name(customer)
+        normalized_pizza = normalize_name(pizza)
+
+        # Если покупатель уже есть в словаре
+        if normalized_customer in orders:
+            # Если такая пицца уже заказывалась - добавляем количество
+            if normalized_pizza in orders[normalized_customer]:
+                orders[normalized_customer][normalized_pizza] += count
+                print(f"  (Обновлено: {customer} добавил(а) еще {count} пиццы '{pizza}')")
+            else:
+                orders[normalized_customer][normalized_pizza] = count
+                print(f"  (Добавлена новая пицца '{pizza}' для {customer})")
+        else:
+            # Создаем нового покупателя
+            orders[normalized_customer] = {normalized_pizza: count}
+            print(f"  (Добавлен новый покупатель {customer})")
+
+        break
+
+# Выводим результаты в алфавитном порядке
+
+print("ИТОГОВЫЕ ЗАКАЗЫ:")
+
+if not orders:
+    print("Нет ни одного заказа.")
+else:
+    for customer in sorted(orders.keys()):
+        # Находим оригинальное написание покупателя (первый заказ)
+        # Для этого сохраняем оригинальные имена в отдельном словаре
+        # В данном случае выводим в нормализованном виде
+        print(f"{customer}:")
+        # Сортируем пиццы по названию
+        for pizza in sorted(orders[customer].keys()):
+            print(f"\t{pizza}: {orders[customer][pizza]}")
