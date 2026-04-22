@@ -1,0 +1,88 @@
+# Ввод максимального числа с защитой
+while True:
+    try:
+        N = int(input("Введите максимальное число: "))
+        if N <= 0:
+            print("Ошибка: число должно быть положительным. Попробуйте снова.")
+            continue
+        if N > 10000:  # Ограничение для предотвращения слишком больших множеств
+            print("Предупреждение: большое число может замедлить работу программы.")
+            confirm = input("Продолжить? (да/нет): ").lower()
+            if confirm != 'да':
+                continue
+        break
+    except ValueError:
+        print("Ошибка: введите целое число. Попробуйте снова.")
+
+# Множество всех возможных чисел от 1 до N
+possible_numbers = set(range(1, N + 1))
+
+# Счетчик попыток для защиты от бесконечного цикла
+attempts = 0
+MAX_ATTEMPTS = 100
+
+while True:
+    # Защита от слишком большого количества попыток
+    attempts += 1
+    if attempts > MAX_ATTEMPTS:
+        print("\nПревышено максимальное количество попыток.")
+        break
+
+    # Ввод чисел от Сергея с защитой
+    guess_input = input("\nНужное число есть среди вот этих чисел: ").strip()
+
+    # Проверка на запрос помощи
+    if guess_input == "Помогите!":
+        break
+
+    # Защита от пустого ввода
+    if not guess_input:
+        print("Ошибка: введите числа или 'Помогите!'")
+        continue
+
+    # Преобразуем введенные числа в множество с защитой от ошибок
+    try:
+        numbers_list = guess_input.split()
+        # Защита от слишком большого количества чисел
+        if len(numbers_list) > 1000:
+            print("Ошибка: слишком много чисел в одном запросе.")
+            continue
+
+        guess_set = set(map(int, numbers_list))
+
+        # Проверка, что все числа в допустимом диапазоне
+        invalid_numbers = [x for x in guess_set if x < 1 or x > N]
+        if invalid_numbers:
+            print(f"Ошибка: числа {invalid_numbers} вне допустимого диапазона (1-{N})")
+            continue
+
+    except ValueError:
+        print("Ошибка: введите только целые числа, разделенные пробелами.")
+        continue
+
+    # Ответ Ивана с защитой от некорректного ввода
+    while True:
+        ivan_answer = input("Ответ Ивана: ").strip().capitalize()
+        if ivan_answer in ["Да", "Нет"]:
+            break
+        else:
+            print("Ошибка: ответ должен быть 'Да' или 'Нет'. Попробуйте снова.")
+
+    # Обработка ответа
+    if ivan_answer == "Да":
+        # Пересечение с текущими возможными числами
+        possible_numbers &= guess_set
+    elif ivan_answer == "Нет":
+        # Исключаем названные числа
+        possible_numbers -= guess_set
+
+    # Защита: если не осталось возможных чисел
+    if not possible_numbers:
+        print("\nВнимание: не осталось возможных чисел! Возможны противоречия в ответах.")
+        break
+
+# Вывод результата с защитой от пустого множества
+if possible_numbers:
+    print("\nИван мог загадать следующие числа:", *sorted(possible_numbers))
+else:
+    print("\nНе найдено чисел, удовлетворяющих всем ответам.")
