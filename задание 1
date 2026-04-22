@@ -1,0 +1,86 @@
+import re
+
+
+def normalize_name(name):
+    """Приводит имя к нижнему регистру для сравнения без учета регистра"""
+    return name.strip().lower()
+
+
+def is_valid_name(name):
+    """Проверяет, что имя состоит из букв, пробелов, дефисов и точек"""
+    return bool(re.match(r'^[a-zA-Zа-яА-ЯёЁ\s\-\.]+$', name))
+
+
+# Ввод количества стран с защитой
+while True:
+    try:
+        K = int(input("Кол-во стран: "))
+        if K <= 0:
+            print("Ошибка: количество стран должно быть положительным числом. Попробуйте снова.")
+            continue
+        break
+    except ValueError:
+        print("Ошибка: введите целое число. Попробуйте снова.")
+
+# Создаем словарь для хранения стран и их городов
+# Ключи (города) храним в нижнем регистре, значения (страны) - в оригинальном виде
+country_cities = {}
+
+# Вводим страны и их города
+for i in range(K):
+    while True:
+        data = input(f"{i + 1} страна: ").strip().split()
+        if len(data) < 2:
+            print("Ошибка: введите название страны и хотя бы один город. Попробуйте снова.")
+            continue
+
+        country = data[0]
+
+        # Проверка, что название страны не пустое и содержит допустимые символы
+        if not country or not is_valid_name(country):
+            print("Ошибка: название страны должно содержать только буквы, пробелы, дефисы или точки. Попробуйте снова.")
+            continue
+
+        cities = data[1:]
+
+        # Проверка, что названия городов содержат допустимые символы
+        invalid_cities = [city for city in cities if not is_valid_name(city)]
+        if invalid_cities:
+            print(
+                f"Ошибка: названия городов должны содержать только буквы, пробелы, дефисы или точки. Неверные города: {', '.join(invalid_cities)}")
+            continue
+
+        # Добавляем города в словарь (приводим названия городов к нижнему регистру)
+        for city in cities:
+            normalized_city = normalize_name(city)
+            # Проверяем, не добавлен ли уже этот город в другую страну
+            if normalized_city in country_cities:
+                print(
+                    f"Предупреждение: город {city} уже принадлежит стране {country_cities[normalized_city]}. Он будет переназначен стране {country}.")
+            country_cities[normalized_city] = country
+        break
+
+# Вводим 3 города и ищем их страны
+for i in range(3):
+    while True:
+        city = input(f"{i + 1} город: ").strip()
+
+        # Проверка на пустой ввод
+        if not city:
+            print("Ошибка: название города не может быть пустым. Попробуйте снова.")
+            continue
+
+        # Проверка, что название города содержит допустимые символы
+        if not is_valid_name(city):
+            print("Ошибка: название города должно содержать только буквы, пробелы, дефисы или точки. Попробуйте снова.")
+            continue
+
+        # Приводим введенный город к нижнему регистру для поиска
+        normalized_city = normalize_name(city)
+
+        # Поиск города в словаре
+        if normalized_city in country_cities:
+            print(f"Город {city} расположен в стране {country_cities[normalized_city]}.")
+        else:
+            print(f"По городу {city} данных нет.")
+        break
