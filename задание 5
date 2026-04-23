@@ -1,0 +1,97 @@
+# Открываем оба файла с защитой от ошибок
+try:
+    with open('russian.txt', 'r', encoding='utf-8') as rus_file, \
+            open('english.txt', 'r', encoding='utf-8') as eng_file:
+        # Читаем строки из файлов
+        russian_words = rus_file.readlines()
+        english_words = eng_file.readlines()
+except FileNotFoundError as e:
+    print(f"Ошибка: Файл не найден - {e.filename}")
+    exit(1)
+except Exception as e:
+    print(f"Ошибка при открытии файлов: {e}")
+    exit(1)
+
+# Проверяем, что файлы не пустые
+if not russian_words or not english_words:
+    print("Ошибка: Один из файлов пуст")
+    exit(1)
+
+# Проверяем соответствие количества слов
+if len(russian_words) != len(english_words):
+    print(f"Предупреждение: Количество слов в файлах не совпадает!")
+    print(f"Русских слов: {len(russian_words)}, Английских слов: {len(english_words)}")
+    print("Будут использованы только пары до меньшего количества")
+    total = min(len(russian_words), len(english_words))
+else:
+    total = len(russian_words)
+
+# Счетчики правильных и неправильных ответов
+correct = 0
+print("Тестирование перевода слов:\n")
+
+# Проходим по всем словам
+for i in range(total):
+    try:
+        russian_word = russian_words[i].strip()
+        correct_english = english_words[i].strip()
+
+        # Пропускаем пустые строки
+        if not russian_word or not correct_english:
+            print(f"Предупреждение: Пропущена пустая строка в паре {i + 1}")
+            continue
+
+        # Выводим русское слово и ждем перевод с защитой от ввода
+        while True:
+            user_translation = input(f"{i + 1}. {russian_word} -> ").strip()
+
+            # Проверка на пустой ввод
+            if not user_translation:
+                print("Пожалуйста, введите перевод (или 'выход' для завершения)")
+                continue
+
+            # Возможность выйти из теста
+            if user_translation.lower() == 'выход':
+                print("Тестирование прервано пользователем")
+                break
+
+            # Проверяем правильность перевода (игнорируем регистр и лишние пробелы)
+            if user_translation.lower() == correct_english.lower():
+                print("Верно!")
+                correct += 1
+                break
+            else:
+                print(f"Неверно! Правильный ответ: {correct_english}")
+
+        # Если пользователь вышел через 'выход', прерываем тест
+        if 'user_translation' in locals() and user_translation.lower() == 'выход':
+            break
+
+    except KeyboardInterrupt:
+        print("\n\nТестирование прервано пользователем (Ctrl+C)")
+        break
+    except Exception as e:
+        print(f"Произошла ошибка при обработке слова {i + 1}: {e}")
+        continue
+
+# Выводим итоговые результаты
+print(f"Тестирование завершено!")
+print(f"Правильных ответов: {correct} из {total}")
+print(f"Пропущено/обработано: {total - (correct + (total - correct))}")
+
+# Ставим оценку 
+if total > 0:
+    percentage = correct / total * 100
+    print(f"Процент правильных ответов: {percentage:.1f}%")
+
+    if percentage >= 90:
+        grade = "5 (Отлично)"
+    elif percentage >= 75:
+        grade = "4 (Хорошо)"
+    elif percentage >= 60:
+        grade = "3 (Удовлетворительно)"
+    else:
+        grade = "2 (Неудовлетворительно)"
+    print(f"Оценка: {grade}")
+else:
+    print("Нет слов для тестирования")
