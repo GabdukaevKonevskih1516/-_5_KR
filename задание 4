@@ -1,0 +1,175 @@
+def build_family_tree():
+    """
+    Построение генеалогического древа и вычисление высоты каждого члена
+    """
+    try:
+        # Ввод количества человек с защитой
+        while True:
+            try:
+                N = int(input("Введите количество человек: "))
+                if N <= 0:
+                    print("Ошибка: количество человек должно быть положительным числом.")
+                    continue
+                if N > 10000:
+                    print("Предупреждение: большое количество людей может замедлить работу.")
+                    confirm = input("Продолжить? (да/нет): ").lower()
+                    if confirm != 'да':
+                        continue
+                break
+            except ValueError:
+                print("Ошибка: введите целое число.")
+
+        # Словарь для хранения родителей: потомок -> родитель
+        children_to_parent = {}
+        # Множество для хранения всех людей
+        all_people = set()
+
+        # Ввод связей родитель-потомок
+        for i in range(N - 1):
+            while True:
+                try:
+                    relation = input(f"{i + 1} пара: ").strip()
+
+                    # Защита от пустого ввода
+                    if not relation:
+                        print("Ошибка: строка не может быть пустой.")
+                        continue
+
+                    # Разделение на потомка и родителя
+                    parts = relation.split()
+
+                    # Защита от неправильного формата
+                    if len(parts) != 2:
+                        print("Ошибка: введите имя_потомка и имя_родителя через пробел.")
+                        continue
+
+                    child, parent = parts[0], parts[1]
+
+                    # Защита от пустых имен
+                    if not child or not parent:
+                        print("Ошибка: имена не могут быть пустыми.")
+                        continue
+
+                    # Защита от дублирования потомка (у каждого должен быть только один родитель)
+                    if child in children_to_parent:
+                        print(f"Ошибка: у {child} уже есть родитель {children_to_parent[child]}")
+                        continue
+
+                    # Защита от циклических связей (проверка позже)
+                    children_to_parent[child] = parent
+                    all_people.add(child)
+                    all_people.add(parent)
+                    break
+
+                except Exception as e:
+                    print(f"Ошибка при обработке строки: {e}")
+                    continue
+
+        # Защита: проверка, что количество уникальных людей соответствует N
+        if len(all_people) != N:
+            print(f"Предупреждение: количество уникальных людей ({len(all_people)}) "
+                  f"не совпадает с заявленным ({N})")
+            # Корректируем N для дальнейшей работы
+            N = len(all_people)
+
+        # Поиск корня (человека, который не является чьим-либо потомком)
+        all_children = set(children_to_parent.keys())
+        all_parents = set(children_to_parent.values())
+
+        # Защита: проверка на наличие корня
+        roots = all_parents - all_children
+
+        if len(roots) == 0:
+            print("Ошибка: циклическое дерево - нет корневого элемента.")
+            return
+        elif len(roots) > 1:
+            print(f"Предупреждение: найдено несколько корней: {roots}")
+            # В данном случае возьмем один корень (можно уточнить у пользователя)
+            root = min(roots)  # Берем лексикографически минимальный
+            print(f"Используем {root} в качестве корня.")
+        else:
+            root = roots.pop()
+
+        # Словарь для хранения высот
+        heights = {}
+
+        # Функция для рекурсивного вычисления высоты с защитой от глубокой рекурсии
+        import sys
+        sys.setrecursionlimit(10000)  # Увеличиваем лимит рекурсии
+
+        def calculate_height(person, depth=0):
+            """
+            Рекурсивное вычисление высоты с защитой от циклов
+            """
+            # Защита от слишком глубокой рекурсии
+            if depth > N:
+                raise RecursionError("Обнаружена возможная циклическая зависимость")
+
+            # Если уже вычислили, возвращаем
+            if person in heights:
+                return heights[person]
+
+            # Если это корень
+            if person == root:
+                heights[person] = 0
+                return 0
+
+            # Если родитель не найден
+            if person not in children_to_parent:
+                # Это может быть изолированный узел
+                heights[person] = 0
+                return 0
+
+            parent = children_to_parent[person]
+
+            # Защита от циклических ссылок
+            if parent == person:
+                print(f"Ошибка: {person} ссылается сам на себя")
+                heights[person] = 0
+                return 0
+
+            # Рекурсивно вычисляем высоту родителя
+            parent_height = calculate_height(parent, depth + 1)
+            heights[person] = parent_height + 1
+            return heights[person]
+
+        # Вычисляем высоту для всех людей
+        try:
+            for person in all_people:
+                if person not in heights:
+                    calculate_height(person)
+        except RecursionError:
+            print("Ошибка: обнаружена циклическая зависимость в дереве.")
+            return
+        except Exception as e:
+            print(f"Неожиданная ошибка при вычислении высот: {e}")
+            return
+
+        # Вывод результатов в лексикографическом порядке
+        print("\n\"Высота\" каждого члена семьи:")
+        for person in sorted(all_people):
+            print(f"{person} {heights.get(person, 0)}")
+
+    except KeyboardInterrupt:
+        print("\nПрограмма прервана пользователем.")
+    except Exception as e:
+        print(f"Произошла непредвиденная ошибка: {e}")
+
+
+# Запуск программы
+if __name__ == "__main__":
+    build_family_tree()
+
+
+'''
+Введите количество человек: 9
+1 пара: Alexei Peter_I
+2 пара: Anna Peter_I
+3 пара: Elizabeth Peter_I
+4 пара: Peter_II Alexei
+5 пара: Peter_III Anna
+6 пара: Paul_I Peter_III
+7 пара: Alexander_I Paul_I
+8 пара: Nicholasus_I Paul_I
+'''
+
